@@ -1,6 +1,5 @@
 # DeepResearch
 
-<div align="center">
 **多智能体深度研究系统** 
 基于 LangGraph 的自动化 AI 研究助手 · 对抗式质量审查 · Self-Evolution 迭代
 
