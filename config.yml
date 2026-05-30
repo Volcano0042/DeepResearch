@@ -1,0 +1,71 @@
+stages:
+  prod:
+    cognition:
+      openai: 
+        base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
+        api_key: 
+        default_model: qwen3-vl-235b-a22b-thinking
+        temperature: 0
+        timeout_seconds: 600
+        models:
+          qwen-plus:
+            max_tokens: 32768
+          qwen-max:
+            max_tokens: 32768
+          qwen-turbo:
+            max_tokens: 32768
+    search:
+      backend: tavily
+      tavily:
+        api_key: 
+        base_url: https://api.tavily.com  # 15次
+        max_results: 3
+        topic: general
+        include_raw_content: true
+        timeout_seconds: 300
+    roles:
+      supervisor:
+        backend: openai 
+        handle: qwen3-vl-235b-a22b-thinking # 32w tokens
+        max_tokens: 32768
+        timeout_seconds: 600
+      red_team:
+        backend: openai
+        handle: qwen-max # 使用更强的模型进行红队测试  1w tokens
+        max_tokens: 32768
+        timeout_seconds: 600
+      context_pruner:
+        backend: openai
+        handle: qwen-turbo # 使用轻量级模型处理上下文 0.5w tokens
+        max_tokens: 32768
+        timeout_seconds: 600
+      researcher_main:
+        backend: openai
+        handle: qwen-plus-2025-07-28  # 13w tokens
+        max_tokens: 32768
+        timeout_seconds: 600
+      researcher_summarizer:
+        backend: openai
+        handle: qwen-plus-2025-12-01  # 64w tokens
+        max_tokens: 32768
+        timeout_seconds: 600
+      researcher_compressor:
+        backend: openai
+        handle: qwen-plus-2025-12-01
+        max_tokens: 32768
+        timeout_seconds: 600
+      writer:
+        backend: openai
+        handle: qwen-plus-2025-12-01
+        max_tokens: 32768
+        timeout_seconds: 600
+      draft:
+        backend: openai
+        handle: qwen-plus-2025-12-01
+        max_tokens: 32768
+        timeout_seconds: 600
+      evaluator:
+        backend: openai
+        handle: qwen-plus-2025-12-01
+        max_tokens: 32768
+        timeout_seconds: 600
