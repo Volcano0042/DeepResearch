@@ -67,6 +67,8 @@ EVAL_TASKS = [
         report_path="results/output_report_sample_2.md",
         brief_question="请详细调研当前主流 AI Agent / 大模型系统中的个性化记忆（Memory）功能如何实现，包括短期记忆（会话内上下文管理）和长期记忆（跨会话偏好/事实存储）的技术方案、架构设计、写入/检索/更新/遗忘机制，以及不同框架（LangGraph、AutoGen、Letta 等）的实现差异。",
     ),
+    # ToDo
+
     EvalTask(
         id="agent_memory_v2",
         topic="AI Agent 个性化记忆功能工程落地与技术演进深度调研报告",
@@ -430,82 +432,82 @@ def get_dashscope_api_key() -> str:
     return ""
 
 
-async def run_evaluation():
-    """执行完整的评测流程"""
-    print("=" * 60)
-    print("  DeepResearch vs DeepSeek V4 Flash 对比评测")
-    print("=" * 60)
-
-    if not DEEPSEEK_API_KEY:
-        print("\n错误: 未设置 DEEPSEEK_API_KEY 环境变量")
-        print("请运行: export DEEPSEEK_API_KEY=your_deepseek_api_key")
-        return
-
-    dashscope_key = get_dashscope_api_key()
-    if dashscope_key:
-        print("  [OK] DashScope API Key 已就绪（用于裁判 LLM）")
-
-    cache = load_cache()
-    results = []
-
-    for task in EVAL_TASKS:
-        print(f"\n--- [{task.id}] {task.topic} ---")
-
-        # 1. 获取 DeepSeek Baseline 回答（带搜索 + 缓存）
-        cache_key = f"deepseek_search_{task.id}"
-        if cache_key in cache:
-            print("  [缓存] DeepSeek Baseline（含搜索）已缓存，跳过调用")
-            deepseek_report = cache[cache_key]
-        else:
-            print("  [DeepSeek] 正在搜索并生成 Baseline 回答...")
-            deepseek_report = await _search_and_generate_for_deepseek(task.brief_question)
-            cache[cache_key] = deepseek_report
-            save_cache(cache)
-            print(f"  [DeepSeek] 生成完毕 ({len(deepseek_report)} 字符)")
-
-        # 2. 加载已有 DeepResearch 报告
-        print("  [DeepResearch] 加载已有报告...")
-        deepresearch_report = load_existing_report(task.report_path)
-        print(f"  [DeepResearch] 加载完毕 ({len(deepresearch_report)} 字符)")
-
-        # 3. 裁判打分
-        print("  [Judge] 正在对比评分...")
-        score = await judge_comparison(task.topic, deepresearch_report, deepseek_report)
-        print(f"  [Judge] 评分完毕: winner={score.winner}")
-        print(f"           DeepResearch 总分={score.report_a.comprehensiveness + score.report_a.accuracy + score.report_a.depth + score.report_a.structure + score.report_a.sourcing}")
-        print(f"           DeepSeek 总分={score.report_b.comprehensiveness + score.report_b.accuracy + score.report_b.depth + score.report_b.structure + score.report_b.sourcing}")
-
-        # 4. 记录结果
-        result = EvalResult(
-            task_id=task.id,
-            topic=task.topic,
-            deepseek_word_count=len(deepseek_report),
-            deepresearch_word_count=len(deepresearch_report),
-            dr_comprehensiveness=score.report_a.comprehensiveness,
-            ds_comprehensiveness=score.report_b.comprehensiveness,
-            dr_accuracy=score.report_a.accuracy,
-            ds_accuracy=score.report_b.accuracy,
-            dr_depth=score.report_a.depth,
-            ds_depth=score.report_b.depth,
-            dr_structure=score.report_a.structure,
-            ds_structure=score.report_b.structure,
-            dr_sourcing=score.report_a.sourcing,
-            ds_sourcing=score.report_b.sourcing,
-            dr_summary=score.report_a.summary,
-            ds_summary=score.report_b.summary,
-            winner={"report_a": "a", "report_b": "b", "a": "a", "b": "b", "tie": "tie"}.get(score.winner, "a"),
-            overall_summary=score.overall_summary,
-        )
-        results.append(result)
-
-    # 5. 输出汇总报告
-    report_md = generate_markdown_report(results)
-    output_path = Path(__file__).parent / "results.md"
-    output_path.write_text(report_md, encoding="utf-8")
-    print(f"\n{'=' * 60}")
-    print(f"  评测完成! 结果已保存到: {output_path}")
-    print(f"{'=' * 60}")
-    print(f"\n{report_md}")
+# async def run_evaluation():
+#     """执行完整的评测流程"""
+#     print("=" * 60)
+#     print("  DeepResearch vs DeepSeek V4 Flash 对比评测")
+#     print("=" * 60)
+#
+#     if not DEEPSEEK_API_KEY:
+#         print("\n错误: 未设置 DEEPSEEK_API_KEY 环境变量")
+#         print("请运行: export DEEPSEEK_API_KEY=your_deepseek_api_key")
+#         return
+#
+#     dashscope_key = get_dashscope_api_key()
+#     if dashscope_key:
+#         print("  [OK] DashScope API Key 已就绪（用于裁判 LLM）")
+#
+#     cache = load_cache()
+#     results = []
+#
+#     for task in EVAL_TASKS:
+#         print(f"\n--- [{task.id}] {task.topic} ---")
+#
+#         # 1. 获取 DeepSeek Baseline 回答（带搜索 + 缓存）
+#         cache_key = f"deepseek_search_{task.id}"
+#         if cache_key in cache:
+#             print("  [缓存] DeepSeek Baseline（含搜索）已缓存，跳过调用")
+#             deepseek_report = cache[cache_key]
+#         else:
+#             print("  [DeepSeek] 正在搜索并生成 Baseline 回答...")
+#             deepseek_report = await _search_and_generate_for_deepseek(task.brief_question)
+#             cache[cache_key] = deepseek_report
+#             save_cache(cache)
+#             print(f"  [DeepSeek] 生成完毕 ({len(deepseek_report)} 字符)")
+#
+#         # 2. 加载已有 DeepResearch 报告
+#         print("  [DeepResearch] 加载已有报告...")
+#         deepresearch_report = load_existing_report(task.report_path)
+#         print(f"  [DeepResearch] 加载完毕 ({len(deepresearch_report)} 字符)")
+#
+#         # 3. 裁判打分
+#         print("  [Judge] 正在对比评分...")
+#         score = await judge_comparison(task.topic, deepresearch_report, deepseek_report)
+#         print(f"  [Judge] 评分完毕: winner={score.winner}")
+#         print(f"           DeepResearch 总分={score.report_a.comprehensiveness + score.report_a.accuracy + score.report_a.depth + score.report_a.structure + score.report_a.sourcing}")
+#         print(f"           DeepSeek 总分={score.report_b.comprehensiveness + score.report_b.accuracy + score.report_b.depth + score.report_b.structure + score.report_b.sourcing}")
+#
+#         # 4. 记录结果
+#         result = EvalResult(
+#             task_id=task.id,
+#             topic=task.topic,
+#             deepseek_word_count=len(deepseek_report),
+#             deepresearch_word_count=len(deepresearch_report),
+#             dr_comprehensiveness=score.report_a.comprehensiveness,
+#             ds_comprehensiveness=score.report_b.comprehensiveness,
+#             dr_accuracy=score.report_a.accuracy,
+#             ds_accuracy=score.report_b.accuracy,
+#             dr_depth=score.report_a.depth,
+#             ds_depth=score.report_b.depth,
+#             dr_structure=score.report_a.structure,
+#             ds_structure=score.report_b.structure,
+#             dr_sourcing=score.report_a.sourcing,
+#             ds_sourcing=score.report_b.sourcing,
+#             dr_summary=score.report_a.summary,
+#             ds_summary=score.report_b.summary,
+#             winner={"report_a": "a", "report_b": "b", "a": "a", "b": "b", "tie": "tie"}.get(score.winner, "a"),
+#             overall_summary=score.overall_summary,
+#         )
+#         results.append(result)
+#
+#     # 5. 输出汇总报告
+#     report_md = generate_markdown_report(results)
+#     output_path = Path(__file__).parent / "results.md"
+#     output_path.write_text(report_md, encoding="utf-8")
+#     print(f"\n{'=' * 60}")
+#     print(f"  评测完成! 结果已保存到: {output_path}")
+#     print(f"{'=' * 60}")
+#     print(f"\n{report_md}")
 
 
 if __name__ == "__main__":
